@@ -1,0 +1,19 @@
+{
+  "name": "codeviz",
+  "version": "0.0.1",
+  "description": "Node application to show code stats from an organization",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm test"
+  },
+  "author": "Stefan Oderbolz <odi@readmore.ch> (http://metaodi.ch/)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/metaodi/codeviz.git"
+  },
+  "dependencies": {
+    "github": "^0.2.0",
+    "hapi": "^6.0.2"
+  }
+}
