@@ -22,7 +22,8 @@ if (Fs.existsSync('config.yml')) {
 }
 
 // Create a server with a host and port
-var server = Hapi.createServer('0.0.0.0', 8080);
+var port = process.env.PORT || 8080;
+var server = Hapi.createServer('0.0.0.0', +port);
 
 var orgMap = {};
 
