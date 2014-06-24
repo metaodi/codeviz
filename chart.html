@@ -1,0 +1,22 @@
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+        <title>Org Chart</title>
+        <script type='text/javascript' src='//code.jquery.com/jquery-1.9.1.js'></script>
+        <script type='text/javascript'>
+        var org = window.location.pathname.split('/')[2]
+        console.log(org);
+        $.get("/stats/" + org, function(data) {
+            $('#container').highcharts(data);
+        });
+        </script>
+    </head>
+    <body>
+        <script src="http://code.highcharts.com/highcharts.js"></script>
+        <script src="http://code.highcharts.com/modules/exporting.js"></script>
+
+        <div id="container" style="min-width: 310px; height: 400px; margin: 0 auto"></div>
+    </body>
+</html>
