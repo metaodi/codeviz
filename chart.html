@@ -7,8 +7,7 @@
         <script type='text/javascript' src='//code.jquery.com/jquery-1.9.1.js'></script>
         <script type='text/javascript'>
         var org = window.location.pathname.split('/')[2]
-        console.log(org);
-        $.get("/stats/" + org, function(data) {
+        $.get("/stats/" + org + window.location.search, function(data) {
             $('#container').highcharts(data);
         });
         </script>

@@ -24,12 +24,17 @@ if (Fs.existsSync('config.yml')) {
 // Create a server with a host and port
 var server = Hapi.createServer('0.0.0.0', 8080);
 
+var orgMap = {};
+
 // serve JSON for highchart
 server.route({
     method: 'GET',
     path: '/stats/{org}',
     handler: function(request, reply) {
-        console.log(request.params)
+        if (orgMap[request.params.org] && !request.url.query.hasOwnProperty('force')) {
+            reply(orgMap[request.params.org]);
+            return;
+        }
         Async.waterfall([
             function(callback) {
                 console.log("getting member");
@@ -71,7 +76,6 @@ server.route({
             },
             function(userData, callback) {
                 console.log("got all user details");
-                console.log("userData", userData);
                 callback(null, {
                     title: {
                         text: 'Repositories per User',
@@ -111,6 +115,7 @@ server.route({
             },
             function(highchartsJson, callback) {
                 console.log("reply");
+                orgMap[request.params.org] = highchartsJson;
                 reply(highchartsJson);
             }
         ]);
