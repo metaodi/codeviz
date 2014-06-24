@@ -1,0 +1,16 @@
+language: node_js
+
+node_js:
+  - '0.10'
+  - '0.9'
+
+deploy:
+  provider: heroku
+  skip_cleanup: true
+  api_key:
+    secure: dXd4p/6phPPpKed1sf/s2P++MLkLZgF+NyzNjcmoZRB+GFdSyDhtPqO08e40JGVL+pbdlGyto1U66BAF0aOFux9XxPYCeZ6l3KzqzWOso0hWnHfwrGWNS11/IkPimYMdvRO8D+2YcEquVpeRX+mhum9TRoUdlWcLbTF0v1yulek=
+  app:
+    master: codeviz
+  on:
+    repo: metaodi/codeviz
+    node: '0.10'

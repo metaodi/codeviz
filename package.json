@@ -4,7 +4,7 @@
   "description": "Node application to show code stats from an organization",
   "main": "index.js",
   "scripts": {
-    "test": "npm test"
+    "test": ""
   },
   "author": "Stefan Oderbolz <odi@readmore.ch> (http://metaodi.ch/)",
   "license": "MIT",
