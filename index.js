@@ -45,62 +45,65 @@ server.route({
     method: 'GET',
     path: '/stats-repositories/{org}',
     handler: function(request, reply) {
-        /*if (orgMap[request.params.org] && !request.url.query.hasOwnProperty('force')) {
-            reply(orgMap[request.params.org]);
-            return;
-        }*/
-        callGithub(Github.orgs.getMembers, {
-            org: request.params.org,
-            per_page: 100
-        }).then(function(members) {
-            console.log("got members", members);
-            return Promise.all(_.map(members, function(member) {
-                return callGithub(Github.user.getFrom, {
-                    user: member.login
-                });
-            }));
-        }).then(function(userData) {
-            console.log("got all user details");
-            reply({
-                title: {
-                    text: 'Repositories per User',
-                    x: -20 //center
-                },
-                subtitle: {
-                    text: 'Source: GitHub.com',
-                    x: -20
-                },
-                chart: {
-                    plotBackgroundColor: null,
-                    plotBorderWidth: 1,//null,
-                    plotShadow: false
-                },
-                tooltip: {
-                    pointFormat: '{series.name}: <b>{point.y}</b>'
-                },
-                plotOptions: {
-                    pie: {
-                        allowPointSelect: true,
-                        cursor: 'pointer',
-                        dataLabels: {
-                            enabled: true,
-                            format: '<b>{point.name}</b>: {point.percentage:.1f} %',
-                            style: {
-                                color: 'black'
+        if (orgMap['stats-repositories'][request.params.org] && !request.url.query.hasOwnProperty('force')) {
+            reply(orgMap['stats-repositories'][request.params.org]);
+        }
+        else {
+            callGithub(Github.orgs.getMembers, {
+                org: request.params.org,
+                per_page: 100
+            }).then(function(members) {
+                console.log("got members", members);
+                return Promise.all(_.map(members, function(member) {
+                    return callGithub(Github.user.getFrom, {
+                        user: member.login
+                    });
+                }));
+            }).then(function(userData) {
+                console.log("got all user details");
+                var json = {
+                    title: {
+                        text: 'Repositories per User',
+                        x: -20 //center
+                    },
+                    subtitle: {
+                        text: 'Source: GitHub.com',
+                        x: -20
+                    },
+                    chart: {
+                        plotBackgroundColor: null,
+                        plotBorderWidth: 1,//null,
+                        plotShadow: false
+                    },
+                    tooltip: {
+                        pointFormat: '{series.name}: <b>{point.y}</b>'
+                    },
+                    plotOptions: {
+                        pie: {
+                            allowPointSelect: true,
+                            cursor: 'pointer',
+                            dataLabels: {
+                                enabled: true,
+                                format: '<b>{point.name}</b>: {point.percentage:.1f} %',
+                                style: {
+                                    color: 'black'
+                                }
                             }
                         }
-                    }
-                },
-                series: [{
-                    type: 'pie',
-                    name: 'Amount of repositories',
-                    data: _.map(userData, function(ghuser) {return [ghuser.login, ghuser.public_repos]})
-                }]
+                    },
+                    series: [{
+                        type: 'pie',
+                        name: 'Amount of repositories',
+                        data: _.map(userData, function(ghuser) {return [ghuser.login, ghuser.public_repos]})
+                    }]
+                }
+                orgMap['stats-repositories'][request.params.org] = json;
+                reply(json);
+            }).catch(function(error) {
+                console.log(error);
+                reply(error);
             });
-        }).catch(function(error) {
-            console.log(error);
-            reply(error);
-        });
+        }
 
     }
 });
@@ -109,40 +112,41 @@ server.route({
     method: 'GET',
     path: '/stats-languages/{org}',
     handler: function(request, reply) {
-        /*if (orgMap[request.params.org] && !request.url.query.hasOwnProperty('force')) {
-            reply(orgMap[request.params.org]);
-            return;
-        }*/
-        callGithub(Github.orgs.getMembers, {
-            org: request.params.org,
-            per_page: 100
-        }).then(function(members) {
-            return Promise.all(_.map(members, function(member) {
-                return callGithub(Github.repos.getFromUser, {
-                    user: member.login
-                }).then(function(repositories) {
-                    return Promise.all(_.map(repositories, function(repository) {
-                        return callGithub(Github.repos.getLanguages, {
-                            user: member.login,
-                            repo: repository.name
-                        });
-                    }));
-                });
-            }));
-        }).then(function(languages) {
-            console.log('got all languages, reducing');
-            languages = _.reduce(_.flatten(languages), function(mem, language) {
-                _.each(_.omit(language, 'meta'), function(value, key) {
-                    if (mem[key] == undefined) mem[key] = 0;
-                    mem[key] = mem[key] + value;
-                })
-                return mem;
-            }, {})
-            reply(languages);
-        }).catch(function(error) {
-            console.log(error);
-            reply(error);
-        });
+        if (orgMap['stats-languages'][request.params.org] && !request.url.query.hasOwnProperty('force')) {
+            reply(orgMap['stats-languages'][request.params.org]);
+        }
+        else {
+            callGithub(Github.orgs.getMembers, {
+                org: request.params.org,
+                per_page: 100
+            }).then(function(members) {
+                return Promise.all(_.map(members, function(member) {
+                    return callGithub(Github.repos.getFromUser, {
+                        user: member.login
+                    }).then(function(repositories) {
+                        return Promise.all(_.map(repositories, function(repository) {
+                            return callGithub(Github.repos.getLanguages, {
+                                user: member.login,
+                                repo: repository.name
+                            });
+                        }));
+                    });
+                }));
+            }).then(function(languages) {
+                console.log('got all languages, reducing');
+                languages = _.reduce(_.flatten(languages), function(mem, language) {
+                    _.each(_.omit(language, 'meta'), function(value, key) {
+                        if (mem[key] == undefined) mem[key] = 0;
+                        mem[key] = mem[key] + value;
+                    })
+                    return mem;
+                }, {})
+                reply(languages);
+            }).catch(function(error) {
+                console.log(error);
+                reply(error);
+            });
+        }
 
     }
 });
