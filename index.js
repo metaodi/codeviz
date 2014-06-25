@@ -33,7 +33,6 @@ function callGithub(call, params) {
         call(params, function (err, res) {
             if (err) reject(err);
             else {
-                console.log(res);
                 fulfill(res);
             }
         });
@@ -141,7 +140,44 @@ server.route({
                     })
                     return mem;
                 }, {})
-                reply(languages);
+                var json = {
+                    title: {
+                        text: 'Languages used by organisation',
+                        x: -20 //center
+                    },
+                    subtitle: {
+                        text: 'Source: GitHub.com',
+                        x: -20
+                    },
+                    chart: {
+                        plotBackgroundColor: null,
+                        plotBorderWidth: 1,//null,
+                        plotShadow: false
+                    },
+                    tooltip: {
+                        pointFormat: '{series.name}: <b>{point.y}</b>'
+                    },
+                    plotOptions: {
+                        pie: {
+                            allowPointSelect: true,
+                            cursor: 'pointer',
+                            dataLabels: {
+                                enabled: true,
+                                format: '<b>{point.name}</b>: {point.percentage:.1f} %',
+                                style: {
+                                    color: 'black'
+                                }
+                            }
+                        }
+                    },
+                    series: [{
+                        type: 'pie',
+                        name: 'Amount of bytes written',
+                        data: _.map(languages, function(value, key) {return [key, value]})
+                    }]
+                }
+                orgMap['stats-languages'][request.params.org] = json;
+                reply(json);
             }).catch(function(error) {
                 console.log(error);
                 reply(error);
@@ -154,7 +190,7 @@ server.route({
 // serve the static chart file
 server.route({
     method: 'GET',
-    path: '/chart/{org}',
+    path: '/chart/{stats}/{org}',
     handler: {
         file: 'chart.html'
     }
