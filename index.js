@@ -25,17 +25,17 @@ if (Fs.existsSync('config.yml')) {
 var port = process.env.PORT || 8080;
 var server = Hapi.createServer('0.0.0.0', +port);
 
-var orgMap = {};
+//var orgMap = {};
 
 // serve JSON for highchart
 server.route({
     method: 'GET',
     path: '/stats/{org}',
     handler: function(request, reply) {
-        if (orgMap[request.params.org] && !request.url.query.hasOwnProperty('force')) {
+        /*if (orgMap[request.params.org] && !request.url.query.hasOwnProperty('force')) {
             reply(orgMap[request.params.org]);
             return;
-        }
+        }*/
         Async.waterfall([
             function(callback) {
                 console.log("getting member");
@@ -54,8 +54,8 @@ server.route({
                 console.log("got members, getting details");
                 var userData = [];
                 var callbackCount = res.length;
-                for (var i in res) {
-                    var user = res[i]
+
+                Async.map(res, function(user, callback) {
                     if (user.login) {
                         console.log("user", user);
                         Github.user.getFrom({user: user.login}, function (e, ghuser) {
@@ -63,17 +63,15 @@ server.route({
                             if (e) {
                                 console.log(e);
                                 userData.push([user.login, 0]);
+                                callback(e);
                                 return;
                             }
-                            userData.push([ghuser.login, ghuser.public_repos]);
-
-                            //check of this is the last call
-                            if(userData.length == res.length) {
-                                callback(null, userData);
-                            }
+                            callback(null, [ghuser.login, ghuser.public_repos]);
                         });
                     }
-                }
+                }, function (err, userData) {
+                    callback(null, userData);
+                });
             },
             function(userData, callback) {
                 console.log("got all user details");
@@ -116,7 +114,7 @@ server.route({
             },
             function(highchartsJson, callback) {
                 console.log("reply");
-                orgMap[request.params.org] = highchartsJson;
+                //orgMap[request.params.org] = highchartsJson;
                 reply(highchartsJson);
             }
         ]);
