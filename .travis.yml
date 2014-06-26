@@ -11,3 +11,7 @@ deploy:
     node: '0.10'
   api_key:
     secure: PMOOWOv0+P++vHVbSITNZeO2KWkFilWWXehh18p3xks7ZFU/rbI0BFcF/IsdbcePHaRJNpdMePq8lwoZwnR+gEIHAvFWKBWkZfdfPuMOkIUcYkO64ThNKtS1QswOXK3DIerDtOVLJoTNLy8SgfyRE3XpgWE7vkowlZ2WyB0IXOQ=
+env:
+  global:
+  - secure: El2jETv9b6imxGBRoSrCHpTKKqsKS7lPD9axo2pBIX87kg3uKWo6vPhrKkE4csv0wuXitz1ebioLOnQo3L5Hc5DTgpEWaNcsqYClskkwTyPoIoJysECzcEd3n56vzI2TWv8hTdZv8io60CvswQLaK7NF6R41q/cTl9ZPOVjhnkc=
+  - secure: WAiCQ3QQvB6nM60tzJ/6jgoelDYmXkoq2/IEbGwL1ca3GhCY83hkHcGsgitaYo3iImN5Eg4IX6Z1G4ljzERKi/reigX0STEOP6g+SMODvl7Yui87+idRMyKtzUjeVoT/adJ1QK0S5FgN53Tdefx6DUorpKaYgcBqRNwOfUeYDt0=
