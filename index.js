@@ -1,22 +1,26 @@
 'use strict';
 
 var Hapi = require('hapi');
+var _ = require('underscore');
+var Promise = require('promise');
+var Fs = require('fs');
 var charts = require('./lib/charts');
 
 // Create a server with a host and port
 var port = process.env.PORT || 8080;
 var server = Hapi.createServer('0.0.0.0', +port);
 
+
 // serve JSON for highchart
-var orgMap = {};
+var cache = {};
 
 // serve JSON for highchart
 server.route({
     method: 'GET',
     path: '/stats/{org}/repo',
     handler: function(request, reply) {
-        if (orgMap['stats-repositories'][request.params.org] && !request.url.query.hasOwnProperty('force')) {
-            reply(orgMap['stats-repositories'][request.params.org]);
+        if (cache['stats-repositories'][request.params.org] && !request.url.query.hasOwnProperty('force')) {
+            reply(cache['stats-repositories'][request.params.org]);
         }
         else {
             callGithub(Github.orgs.getMembers, {
@@ -32,7 +36,7 @@ server.route({
                 var json = getPieChart("Repositories", "Amount of repositories", 
                     _.map(users, function(ghuser) {return [ghuser.login, ghuser.public_repos]})
                 );
-                orgMap['stats-repositories'][request.params.org] = json;
+                cache['stats-repositories'][request.params.org] = json;
                 reply(json);
             }).catch(function(error) {
                 console.log(error);
@@ -43,17 +47,16 @@ server.route({
     }
 });
 
-var contribMap = {};
 server.route({
     method: 'GET',
     path: '/stats/{org}/contrib',
     handler: function(request, reply) {
-        if (contribMap[request.params.org] && !request.url.query.hasOwnProperty('force')) {
-            reply(contribMap[request.params.org]);
+        if (cache['stats-contrib'][request.params.org] && !request.url.query.hasOwnProperty('force')) {
+            reply(cache['stats-contrib'][request.params.org]);
             return;
         }
         charts.orgUserContrib(request.params.org, function(res) {
-            contribMap[request.params.org] = res;
+            cache['stats-contrib'][request.params.org] = res;
             reply(res);
         });
     }
@@ -63,8 +66,8 @@ server.route({
     method: 'GET',
     path: '/stats-languages/{org}',
     handler: function(request, reply) {
-        if (orgMap['stats-languages'][request.params.org] && !request.url.query.hasOwnProperty('force')) {
-            reply(orgMap['stats-languages'][request.params.org]);
+        if (cache['stats-languages'][request.params.org] && !request.url.query.hasOwnProperty('force')) {
+            reply(cache['stats-languages'][request.params.org]);
         }
         else {
             callGithub(Github.orgs.getMembers, {
@@ -95,7 +98,7 @@ server.route({
                 var json = getPieChart("Languages used by organisation", "Amount of bytes written",
                     _.map(languages, function(value, key) {return [key, value]})    
                 );
-                orgMap['stats-languages'][request.params.org] = json;
+                cache['stats-languages'][request.params.org] = json;
                 reply(json);
             }).catch(function(error) {
                 console.log(error);
