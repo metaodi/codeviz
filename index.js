@@ -1,87 +1,19 @@
 'use strict';
 
 var Hapi = require('hapi');
-var _ = require('underscore');
-var Promise = require('promise');
-var Fs = require('fs');
-var Yaml = require('js-yaml');
-var GitHubApi = require('github');
-
-var Github = new GitHubApi({
-    version: "3.0.0",
-    timeout: 5000
-});
-
-//load config and authenticate if there is a config
-if (Fs.existsSync('config.yml')) {
-    var app = Yaml.safeLoad(Fs.readFileSync('config.yml', 'utf8'));
-    Github.authenticate({
-        type: "basic",
-        username: app.github.user,
-        password: app.github.password
-    });
-}
+var charts = require('./lib/charts');
 
 // Create a server with a host and port
 var port = process.env.PORT || 8080;
 var server = Hapi.createServer('0.0.0.0', +port);
 
-var orgMap = {'stats-repositories': {}, 'stats-languages': {}};
-
-function callGithub(call, params) {
-    return new Promise(function (fulfill, reject) {
-        call(params, function (err, res) {
-            if (err) reject(err);
-            else {
-                fulfill(res);
-            }
-        });
-    });
-}
-
-var getPieChart = function(title, name, data) {
-    return {
-        title: {
-            text: title,
-            x: -20 //center
-        },
-        subtitle: {
-            text: 'Source: GitHub.com',
-            x: -20
-        },
-        chart: {
-            plotBackgroundColor: null,
-            plotBorderWidth: 1,//null,
-            plotShadow: false
-        },
-        tooltip: {
-            pointFormat: '{series.name}: <b>{point.y}</b>'
-        },
-        plotOptions: {
-            pie: {
-                allowPointSelect: true,
-                cursor: 'pointer',
-                dataLabels: {
-                    enabled: true,
-                    format: '<b>{point.name}</b>: {point.percentage:.1f} %',
-                    style: {
-                        color: 'black'
-                    }
-                }
-            }
-        },
-        series: [{
-            type: 'pie',
-            name: name,
-            data: data
-        }]
-    }
-}
+// serve JSON for highchart
+var orgMap = {};
 
 // serve JSON for highchart
 server.route({
     method: 'GET',
-    path: '/stats-repositories/{org}',
+    path: '/stats/{org}/repo',
     handler: function(request, reply) {
         if (orgMap['stats-repositories'][request.params.org] && !request.url.query.hasOwnProperty('force')) {
             reply(orgMap['stats-repositories'][request.params.org]);
@@ -108,6 +40,22 @@ server.route({
             });
         }
 
+    }
+});
+
+var contribMap = {};
+server.route({
+    method: 'GET',
+    path: '/stats/{org}/contrib',
+    handler: function(request, reply) {
+        if (contribMap[request.params.org] && !request.url.query.hasOwnProperty('force')) {
+            reply(contribMap[request.params.org]);
+            return;
+        }
+        charts.orgUserContrib(request.params.org, function(res) {
+            contribMap[request.params.org] = res;
+            reply(res);
+        });
     }
 });
 
@@ -161,7 +109,14 @@ server.route({
 // serve the static chart file
 server.route({
     method: 'GET',
-    path: '/chart/{stats}/{org}',
+    path: '/orgs/{org}/repo',
+    handler: {
+        file: 'chart.html'
+    }
+});
+server.route({
+    method: 'GET',
+    path: '/orgs/{org}/contrib',
     handler: {
         file: 'chart.html'
     }

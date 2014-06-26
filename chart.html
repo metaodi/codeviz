@@ -6,9 +6,8 @@
         <title>Org Chart</title>
         <script type='text/javascript' src='//code.jquery.com/jquery-1.9.1.js'></script>
         <script type='text/javascript'>
-        var stats = window.location.pathname.split('/')[2]
-        var org = window.location.pathname.split('/')[3]
-        $.get("/stats-" + stats + "/" + org + window.location.search, function(data) {
+        var path = window.location.pathname.split('/').slice(2).join('/');
+        $.get("/stats/" + path + window.location.search, function(data) {
             $('#container').highcharts(data);
         });
         </script>
