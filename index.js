@@ -11,7 +11,11 @@ var port = process.env.PORT || 8080;
 var server = Hapi.createServer('0.0.0.0', +port);
 
 // serve JSON for highchart
-var cache = {};
+var cache = {
+    'stats-repositories': {},
+    'stats-languages': {},
+    'stats-contrib': {}
+};
 
 // serve JSON for highchart
 server.route({
