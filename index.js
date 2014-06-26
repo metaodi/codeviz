@@ -39,6 +39,45 @@ function callGithub(call, params) {
     });
 }
 
+var getPieChart = function(title, name, data) {
+    return {
+        title: {
+            text: title,
+            x: -20 //center
+        },
+        subtitle: {
+            text: 'Source: GitHub.com',
+            x: -20
+        },
+        chart: {
+            plotBackgroundColor: null,
+            plotBorderWidth: 1,//null,
+            plotShadow: false
+        },
+        tooltip: {
+            pointFormat: '{series.name}: <b>{point.y}</b>'
+        },
+        plotOptions: {
+            pie: {
+                allowPointSelect: true,
+                cursor: 'pointer',
+                dataLabels: {
+                    enabled: true,
+                    format: '<b>{point.name}</b>: {point.percentage:.1f} %',
+                    style: {
+                        color: 'black'
+                    }
+                }
+            }
+        },
+        series: [{
+            type: 'pie',
+            name: name,
+            data: data
+        }]
+    }
+}
+
 // serve JSON for highchart
 server.route({
     method: 'GET',
@@ -52,50 +91,15 @@ server.route({
                 org: request.params.org,
                 per_page: 100
             }).then(function(members) {
-                console.log("got members", members);
                 return Promise.all(_.map(members, function(member) {
                     return callGithub(Github.user.getFrom, {
                         user: member.login
                     });
                 }));
-            }).then(function(userData) {
-                console.log("got all user details");
-                var json = {
-                    title: {
-                        text: 'Repositories per User',
-                        x: -20 //center
-                    },
-                    subtitle: {
-                        text: 'Source: GitHub.com',
-                        x: -20
-                    },
-                    chart: {
-                        plotBackgroundColor: null,
-                        plotBorderWidth: 1,//null,
-                        plotShadow: false
-                    },
-                    tooltip: {
-                        pointFormat: '{series.name}: <b>{point.y}</b>'
-                    },
-                    plotOptions: {
-                        pie: {
-                            allowPointSelect: true,
-                            cursor: 'pointer',
-                            dataLabels: {
-                                enabled: true,
-                                format: '<b>{point.name}</b>: {point.percentage:.1f} %',
-                                style: {
-                                    color: 'black'
-                                }
-                            }
-                        }
-                    },
-                    series: [{
-                        type: 'pie',
-                        name: 'Amount of repositories',
-                        data: _.map(userData, function(ghuser) {return [ghuser.login, ghuser.public_repos]})
-                    }]
-                }
+            }).then(function(users) {
+                var json = getPieChart("Repositories", "Amount of repositories", 
+                    _.map(users, function(ghuser) {return [ghuser.login, ghuser.public_repos]})
+                );
                 orgMap['stats-repositories'][request.params.org] = json;
                 reply(json);
             }).catch(function(error) {
@@ -132,7 +136,6 @@ server.route({
                     });
                 }));
             }).then(function(languages) {
-                console.log('got all languages, reducing');
                 languages = _.reduce(_.flatten(languages), function(mem, language) {
                     _.each(_.omit(language, 'meta'), function(value, key) {
                         if (mem[key] == undefined) mem[key] = 0;
@@ -140,42 +143,10 @@ server.route({
                     })
                     return mem;
                 }, {})
-                var json = {
-                    title: {
-                        text: 'Languages used by organisation',
-                        x: -20 //center
-                    },
-                    subtitle: {
-                        text: 'Source: GitHub.com',
-                        x: -20
-                    },
-                    chart: {
-                        plotBackgroundColor: null,
-                        plotBorderWidth: 1,//null,
-                        plotShadow: false
-                    },
-                    tooltip: {
-                        pointFormat: '{series.name}: <b>{point.y}</b>'
-                    },
-                    plotOptions: {
-                        pie: {
-                            allowPointSelect: true,
-                            cursor: 'pointer',
-                            dataLabels: {
-                                enabled: true,
-                                format: '<b>{point.name}</b>: {point.percentage:.1f} %',
-                                style: {
-                                    color: 'black'
-                                }
-                            }
-                        }
-                    },
-                    series: [{
-                        type: 'pie',
-                        name: 'Amount of bytes written',
-                        data: _.map(languages, function(value, key) {return [key, value]})
-                    }]
-                }
+                
+                var json = getPieChart("Languages used by organisation", "Amount of bytes written",
+                    _.map(languages, function(value, key) {return [key, value]})    
+                );
                 orgMap['stats-languages'][request.params.org] = json;
                 reply(json);
             }).catch(function(error) {
