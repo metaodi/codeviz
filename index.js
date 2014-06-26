@@ -10,7 +10,6 @@ var charts = require('./lib/charts');
 var port = process.env.PORT || 8080;
 var server = Hapi.createServer('0.0.0.0', +port);
 
-
 // serve JSON for highchart
 var cache = {};
 
@@ -21,29 +20,17 @@ server.route({
     handler: function(request, reply) {
         if (cache['stats-repositories'][request.params.org] && !request.url.query.hasOwnProperty('force')) {
             reply(cache['stats-repositories'][request.params.org]);
+            return;
         }
-        else {
-            callGithub(Github.orgs.getMembers, {
-                org: request.params.org,
-                per_page: 100
-            }).then(function(members) {
-                return Promise.all(_.map(members, function(member) {
-                    return callGithub(Github.user.getFrom, {
-                        user: member.login
-                    });
-                }));
-            }).then(function(users) {
-                var json = getPieChart("Repositories", "Amount of repositories", 
-                    _.map(users, function(ghuser) {return [ghuser.login, ghuser.public_repos]})
-                );
-                cache['stats-repositories'][request.params.org] = json;
-                reply(json);
-            }).catch(function(error) {
-                console.log(error);
+        charts.orgUserRepo(request.params.org, 
+            function(res) {
+                cache['stats-repositories'][request.params.org] = res;
+                reply(res);
+            }, 
+            function() {
                 reply(error);
-            });
-        }
-
+            }
+        );
     }
 });
 
@@ -55,57 +42,35 @@ server.route({
             reply(cache['stats-contrib'][request.params.org]);
             return;
         }
-        charts.orgUserContrib(request.params.org, function(res) {
-            cache['stats-contrib'][request.params.org] = res;
-            reply(res);
-        });
+        charts.orgUserContrib(request.params.org, 
+            function(res) {
+                cache['stats-contrib'][request.params.org] = res;
+                reply(res);
+            }, 
+            function() {
+                reply(error);
+            }
+        );
     }
 });
 
 server.route({
     method: 'GET',
-    path: '/stats-languages/{org}',
+    path: '/stats/{org}/languages',
     handler: function(request, reply) {
         if (cache['stats-languages'][request.params.org] && !request.url.query.hasOwnProperty('force')) {
             reply(cache['stats-languages'][request.params.org]);
+            return;
         }
-        else {
-            callGithub(Github.orgs.getMembers, {
-                org: request.params.org,
-                per_page: 100
-            }).then(function(members) {
-                return Promise.all(_.map(members, function(member) {
-                    return callGithub(Github.repos.getFromUser, {
-                        user: member.login
-                    }).then(function(repositories) {
-                        return Promise.all(_.map(repositories, function(repository) {
-                            return callGithub(Github.repos.getLanguages, {
-                                user: member.login,
-                                repo: repository.name
-                            });
-                        }));
-                    });
-                }));
-            }).then(function(languages) {
-                languages = _.reduce(_.flatten(languages), function(mem, language) {
-                    _.each(_.omit(language, 'meta'), function(value, key) {
-                        if (mem[key] == undefined) mem[key] = 0;
-                        mem[key] = mem[key] + value;
-                    })
-                    return mem;
-                }, {})
-                
-                var json = getPieChart("Languages used by organisation", "Amount of bytes written",
-                    _.map(languages, function(value, key) {return [key, value]})    
-                );
-                cache['stats-languages'][request.params.org] = json;
-                reply(json);
-            }).catch(function(error) {
-                console.log(error);
+        charts.orgUserLanguages(request.params.org, 
+            function(res) {
+                cache['stats-languages'][request.params.org] = res;
+                reply(res);
+            }, 
+            function() {
                 reply(error);
-            });
-        }
-
+            }
+        );
     }
 });
 
@@ -120,6 +85,13 @@ server.route({
 server.route({
     method: 'GET',
     path: '/orgs/{org}/contrib',
+    handler: {
+        file: 'chart.html'
+    }
+});
+server.route({
+    method: 'GET',
+    path: '/orgs/{org}/languages',
     handler: {
         file: 'chart.html'
     }
