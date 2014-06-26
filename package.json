@@ -16,6 +16,9 @@
     "async": "^0.9.0",
     "github": "^0.2.0",
     "hapi": "^6.0.2",
-    "js-yaml": "^3.0.2"
+    "js-yaml": "^3.0.2",
+	"superagent": "^0.18.0",
+    "promise": "^5.0.0",
+    "underscore": "^1.6.0"
   }
 }
