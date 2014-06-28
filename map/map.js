@@ -3,9 +3,7 @@ var connectWebSocket = function(map) {
     var socket = io('http://' + window.location.host);
     socket.on('new_msg', function (data) {
         console.log(data);
-        console.log(data.stadium.coordinates.coordinates);
-        var cord = data.stadium.coordinates.coordinates;
-        var circle = L.circle([cord[1], cord[0]], 100000, {
+        var circle = L.circle(data.stadium.coordinates.coordinates.reverse(), 100000, {
             color: 'red',
             fillColor: '#f03',
             fillOpacity: 0.5
@@ -13,8 +11,7 @@ var connectWebSocket = function(map) {
 
         var ownCircle = null;
         if (data.coordinates) {
-            var oCord = data.coordinates.coordinates;
-            ownCircle = L.circle([oCord[1], oCord[0]], 100000, {
+            ownCircle = L.circle(data.coordinates.coordinates.reverse(), 100000, {
                 color: 'blue',
                 fillColor: '#03',
                 fillOpacity: 0.5
